@@ -29,11 +29,11 @@ class YouTubeConnector(SourceConnector):
         # Search for Blinkit videos
         try:
             search_response = self.youtube.search().list(
-                q="blinkit review OR blinkit delivery OR blinkit 10 min",
+                q='"blinkit grocery haul" OR "blinkit unboxing" OR "blinkit review"',
                 part="id,snippet",
                 maxResults=10, # fetch top 10 videos
                 type="video",
-                publishedAfter=since.isoformat("T") + "Z" if since.tzinfo else since.isoformat() + "Z"
+                publishedAfter=since.strftime("%Y-%m-%dT%H:%M:%SZ")
             ).execute()
         except HttpError as e:
             logger.error(f"YouTube search API error: {e}")

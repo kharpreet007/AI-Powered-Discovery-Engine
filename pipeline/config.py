@@ -57,6 +57,14 @@ class BarrierType(str, Enum):
     APP_UX_ISSUES = "app ux issues"
     NOT_STATED = "not stated"
 
+class PurchaseDriver(str, Enum):
+    CONVENIENCE_SPEED = "convenience/speed"
+    QUALITY_FRESHNESS = "quality/freshness"
+    DISCOUNTS_OFFERS = "discounts/offers"
+    PRODUCT_VARIETY = "product variety"
+    EMERGENCY_URGENCY = "emergency/urgency"
+    NOT_STATED = "not stated"
+
 class SegmentSignal(str, Enum):
     STUDENT = "student/bachelor"
     HOMEMAKER = "homemaker/family shopper"
@@ -92,12 +100,16 @@ CATEGORY_KEYWORDS = {
 
 BEHAVIOR_SIGNAL_WORDS = [
     "always buy", "first time", "switched from", "stopped using", 
-    "stock up", "bulk", "craving", "midnight", "urgent", "forgot"
+    "stock up", "bulk", "craving", "midnight", "urgent", "forgot",
+    "delivery boy", "packaging", "late", "bad experience", "behavior",
+    "fake", "scam", "fraud", "trust", "expired", "stale", "fresh",
+    "delivery", "time", "quick", "fast", "slow", "delay"
 ]
 
 TECH_ONLY_VOCAB = [
     "app crash", "ui", "ux", "payment failed", "refund", "customer care", 
-    "otp", "login issue", "location error"
+    "otp", "login issue", "location error", "deducted", "money deducted",
+    "glitch", "bug", "server", "loading", "stuck", "update", "uninstall"
 ]
 
 SEED_QUESTIONS = [
@@ -111,11 +123,55 @@ SEED_QUESTIONS = [
     "What unmet needs emerge consistently across discussions?"
 ]
 
+REDDIT_DEFAULT_SUBREDDITS = [
+    "blinkit", "AskIndia", "india", "IndiaTech", "bangalore", 
+    "delhi", "mumbai", "pune", "hyderabad", "gurgaon", "noida", 
+    "zomato", "swiggy", "zepto", "IndianStreetBets"
+]
+
+REDDIT_INTENT_QUERIES = {
+    "repeat_purchase": [
+        "I always order from Blinkit",
+        "using Blinkit everyday",
+        "buy groceries on Blinkit every week",
+        "why I use Blinkit",
+        "regular Blinkit customer"
+    ],
+    "frustrations": [
+        "Blinkit experience",
+        "Blinkit review",
+        "Blinkit issue",
+        "Blinkit problem",
+        "bad Blinkit",
+        "good Blinkit"
+    ],
+    "switching_behavior": [
+        "switched to Blinkit",
+        "Blinkit vs Zepto",
+        "Blinkit vs Instamart",
+        "stopped using Blinkit"
+    ],
+    "product_discovery": [
+        "discovered on Blinkit",
+        "found on Blinkit",
+        "recommendation Blinkit",
+        "impulse purchase Blinkit",
+        "first time ordered"
+    ],
+    "unmet_needs": [
+        "wish Blinkit had",
+        "why doesn't Blinkit sell",
+        "couldn't find on Blinkit",
+        "Blinkit should add"
+    ]
+}
+
 class Settings(BaseSettings):
     groq_api_key: str = ""
     gemini_api_key: str = ""
     youtube_api_key: str = ""
     admin_ingest_token: str = ""
+    serpapi_key: str = ""
     
     data_dir: str = "./data"
     chroma_dir: str = "./data/chroma_snapshot"

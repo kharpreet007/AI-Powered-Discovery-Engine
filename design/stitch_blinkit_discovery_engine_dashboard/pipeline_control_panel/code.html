@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blinkit Discovery Engine | Pipeline Flow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Outfit:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#2e2a20",
+                    "on-surface": "#eae1d3",
+                    "on-surface-variant": "#d1c5ae",
+                    "on-background": "#eae1d3",
+                    "on-primary-fixed": "#241a00",
+                    "primary-container": "#f8cb46",
+                    "tertiary-fixed": "#aeecff",
+                    "tertiary-container": "#64e0ff",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#58d6f5",
+                    "secondary-container": "#454747",
+                    "error-container": "#93000a",
+                    "outline-variant": "#4e4634",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "on-tertiary-fixed": "#001f26",
+                    "on-primary": "#3d2e00",
+                    "inverse-primary": "#755b00",
+                    "surface-tint": "#edc13d",
+                    "secondary-fixed": "#e2e2e2",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "surface-variant": "#39342a",
+                    "surface-container-lowest": "#110e06",
+                    "surface-bright": "#3d392f",
+                    "tertiary": "#cdf3ff",
+                    "on-primary-fixed-variant": "#584400",
+                    "secondary": "#c6c6c7",
+                    "primary": "#ffebbc",
+                    "surface-container-low": "#1f1b12",
+                    "surface": "#16130b",
+                    "error": "#ffb4ab",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-tertiary-container": "#006274",
+                    "primary-fixed": "#ffe08f",
+                    "surface-container": "#231f16",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-secondary": "#2f3131",
+                    "inverse-surface": "#eae1d3",
+                    "surface-container-highest": "#39342a",
+                    "on-error": "#690005",
+                    "on-tertiary": "#003641",
+                    "primary-fixed-dim": "#edc13d",
+                    "background": "#16130b",
+                    "inverse-on-surface": "#343026",
+                    "outline": "#9a907b",
+                    "on-primary-container": "#6e5600",
+                    "surface-dim": "#16130b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-gap": "20px",
+                    "container-padding": "32px",
+                    "gutter": "24px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "display-lg": ["Outfit"],
+                    "headline-lg-mobile": ["Outfit"],
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Outfit"],
+                    "title-md": ["Outfit"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #000000; color: #eae1d3; overflow-x: hidden; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(248, 203, 70, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .glow-yellow {
+            box-shadow: 0 0 15px rgba(248, 203, 70, 0.2);
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.98); }
+        }
+        .pipeline-track {
+            background: rgba(255, 255, 255, 0.05);
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .pipeline-fill {
+            background: #F8CB46;
+            height: 100%;
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 0 8px #F8CB46;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-stage {
+            color: #F8CB46;
+            text-shadow: 0 0 12px rgba(248, 203, 70, 0.5);
+        }
+    </style>
+</head>
+<body class="font-body-lg">
+<!-- Global Background Shader -->
+<div class="fixed inset-0 -z-10 opacity-30">
+
+</div>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/10 backdrop-blur-xl border-b border-white/10 transition-all duration-300 ease-in-out">
+<div class="flex justify-between items-center px-container-padding h-20 max-w-[1600px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="font-display-lg text-headline-lg tracking-tighter text-primary-fixed">Blinkit Discovery Engine</span>
+<nav class="hidden md:flex gap-6">
+<a class="font-title-md text-title-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Dashboard</a>
+<a class="font-title-md text-title-md text-primary-container border-b-2 border-primary-container pb-2 transition-all" href="#">Pipeline</a>
+<a class="font-title-md text-title-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Chat</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2 text-body-sm focus:outline-none focus:border-primary-container transition-all w-64" placeholder="Search operations..." type="text"/>
+</div>
+<button class="bg-primary-container text-on-primary-container font-title-md px-4 py-2 rounded-lg hover:brightness-110 transition-all">Connect Data</button>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-white/5 rounded-full text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-white/5 rounded-full text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a data operations administrator in a sleek, dark tech office setting. High-contrast cinematic lighting with subtle amber highlights reflecting the Blinkit brand colors. The person has a focused, intelligent expression, wearing high-end tech-wear. Depth of field effect with a blurred multi-monitor setup in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwBDVH9hqnpZinn5ic72ZV0avL3AkHQ-9cu_HK1LGahtF8SV5layz9HTxl2ZlrAKKN0QLYRl21B3PXDFFHSDRvSfapGhFZWcLhs-5w56jiHIiAgDKzuQokf09Jp3a6hPPmJGWLxplW2Kj5zmn7jtYsMde8C90RoeQZFTGrkgb14Z8OFa4xN4ABCaRpWHqJwyXFnjTB7Efj4-qiHiJs9hEK86046oJ80EOOKoS36gGdHKBLJueJqfLvaQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Mobile/Tablet Pivot) -->
+<aside class="fixed left-0 top-0 h-full w-64 z-50 bg-surface/20 backdrop-blur-2xl border-r border-white/10 hidden md:flex flex-col py-8 px-4 gap-y-6 pt-24 shadow-2xl">
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary-container/10 text-primary-container border-l-4 border-primary-container transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings_input_component">settings_input_component</span>
+<span class="font-label-caps text-label-caps">Pipeline</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-label-caps text-label-caps">Chat</span>
+</a>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<button class="flex items-center gap-4 px-4 py-4 rounded-xl bg-primary text-on-primary font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all mb-4">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>New Analysis</span>
+</button>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:pl-64 pt-24 min-h-screen">
+<div class="max-w-[1400px] mx-auto p-container-padding">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-12">
+<div>
+<h1 class="font-display-lg text-display-lg text-white mb-2">Pipeline Control Panel</h1>
+<p class="text-on-surface-variant font-body-lg">Command center for real-time data ingestion and intelligence orchestration.</p>
+</div>
+<div class="flex items-center gap-4 glass-card px-4 py-2 rounded-full">
+<span class="w-3 h-3 rounded-full bg-primary-container animate-pulse shadow-[0_0_8px_#F8CB46]"></span>
+<span class="text-label-caps text-primary-container font-bold tracking-widest uppercase">System Live</span>
+<span class="text-on-surface-variant text-body-sm opacity-50 ml-2">Uptime: 99.98%</span>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-card-gap">
+<!-- Ingestion Controls -->
+<section class="col-span-12 lg:col-span-5 flex flex-col gap-card-gap">
+<!-- Security Access -->
+<div class="glass-card p-8 rounded-2xl">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary-container" data-icon="security">security</span>
+<h2 class="font-title-md text-title-md text-white">Security Authorization</h2>
+</div>
+<div class="space-y-4">
+<label class="block text-label-caps text-on-surface-variant">ADMIN_TOKEN</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all" placeholder="••••••••••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary-container">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+<p class="text-[10px] text-on-surface-variant/40 leading-relaxed">
+                                Pipeline execution requires Level-3 Administrative authorization. All actions are logged under the current session ID.
+                            </p>
+</div>
+</div>
+<!-- Trigger Actions -->
+<div class="glass-card p-8 rounded-2xl flex-grow">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary-container" data-icon="rocket_launch">rocket_launch</span>
+<h2 class="font-title-md text-title-md text-white">Manual Triggers</h2>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<button class="group relative overflow-hidden bg-white/5 border border-white/10 p-6 rounded-xl text-left hover:bg-white/10 transition-all active:scale-95" onclick="startPipeline('demo')">
+<div class="flex justify-between items-center mb-2">
+<span class="text-primary-container font-title-md">Quick Demo Ingestion</span>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity" data-icon="bolt">bolt</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Process 100 sample records for rapid testing and UI validation.</p>
+</button>
+<button class="group relative overflow-hidden bg-primary-container p-6 rounded-xl text-left text-on-primary-container hover:brightness-110 shadow-lg shadow-primary-container/20 transition-all active:scale-95" onclick="startPipeline('full')">
+<div class="flex justify-between items-center mb-2">
+<span class="font-title-md font-bold">Full Pipeline Ingestion</span>
+<span class="material-symbols-outlined" data-icon="database">database</span>
+</div>
+<p class="text-body-sm opacity-80">Orchestrate end-to-end processing for the entire data warehouse.</p>
+</button>
+</div>
+</div>
+</section>
+<!-- Workflow Visualization -->
+<section class="col-span-12 lg:col-span-7">
+<div class="glass-card p-8 rounded-2xl h-full flex flex-col">
+<div class="flex justify-between items-center mb-12">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="account_tree">account_tree</span>
+<h2 class="font-title-md text-title-md text-white">Live Workflow Visualization</h2>
+</div>
+<div class="text-right">
+<div class="text-label-caps text-on-surface-variant opacity-50 mb-1">CURRENT STATUS</div>
+<div class="text-primary-container font-bold tracking-widest text-title-md flex items-center justify-end gap-2">
+<span class="animate-pulse">EXTRACTING</span>
+<span class="material-symbols-outlined text-sm" data-icon="sync" style="font-variation-settings: 'wght' 700;">sync</span>
+</div>
+</div>
+</div>
+<div class="relative flex-grow flex flex-col justify-center gap-16 py-12">
+<!-- Background Visualization -->
+<div class="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+
+</div>
+<!-- Progress Track -->
+<div class="relative">
+<div class="pipeline-track mb-12">
+<div class="pipeline-fill" id="pipeline-progress" style="width: 65%;"></div>
+</div>
+<!-- Stages Grid -->
+<div class="grid grid-cols-4 gap-4 relative z-10">
+<!-- Stage 1 -->
+<div class="text-center group">
+<div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4 bg-primary-container text-on-primary-container shadow-[0_0_15px_#F8CB46] transition-all">
+<span class="material-symbols-outlined" data-icon="cloud_download" style="font-variation-settings: 'FILL' 1;">cloud_download</span>
+</div>
+<div class="text-label-caps font-bold text-on-surface-variant group-hover:text-white transition-colors">Fetching</div>
+<div class="text-[10px] text-primary-container/60">Complete</div>
+</div>
+<!-- Stage 2 -->
+<div class="text-center group">
+<div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4 bg-primary-container text-on-primary-container shadow-[0_0_15px_#F8CB46] transition-all">
+<span class="material-symbols-outlined" data-icon="cleaning_services" style="font-variation-settings: 'FILL' 1;">cleaning_services</span>
+</div>
+<div class="text-label-caps font-bold text-on-surface-variant group-hover:text-white transition-colors">Cleaning</div>
+<div class="text-[10px] text-primary-container/60">Complete</div>
+</div>
+<!-- Stage 3 -->
+<div class="text-center group relative">
+<div class="w-16 h-16 -mt-2 mx-auto rounded-full flex items-center justify-center mb-4 bg-surface-container-high border-2 border-primary-container text-primary-container shadow-[0_0_25px_rgba(248,203,70,0.4)] animate-pulse-subtle transition-all">
+<span class="material-symbols-outlined text-2xl" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="text-label-caps font-bold text-primary-container active-stage group-hover:brightness-125 transition-all">Extracting</div>
+<div class="text-[10px] text-primary-container font-medium">In Progress</div>
+<!-- Active Indicator Ray -->
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-t from-primary-container to-transparent opacity-50"></div>
+</div>
+<!-- Stage 4 -->
+<div class="text-center group opacity-40">
+<div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4 border border-white/20 text-on-surface-variant transition-all">
+<span class="material-symbols-outlined" data-icon="layers" style="font-variation-settings: 'FILL' 0;">layers</span>
+</div>
+<div class="text-label-caps font-bold text-on-surface-variant group-hover:text-white transition-colors">Embedding</div>
+<div class="text-[10px] text-on-surface-variant/40">Queued</div>
+</div>
+</div>
+</div>
+<!-- Detailed Metrics Overlay -->
+<div class="mt-auto grid grid-cols-3 gap-6 pt-12 border-t border-white/5">
+<div class="text-center">
+<div class="text-headline-lg font-display-lg text-white">4.2k</div>
+<div class="text-label-caps text-on-surface-variant opacity-60">Nodes Processed</div>
+</div>
+<div class="text-center">
+<div class="text-headline-lg font-display-lg text-primary-container">12ms</div>
+<div class="text-label-caps text-on-surface-variant opacity-60">Avg. Latency</div>
+</div>
+<div class="text-center">
+<div class="text-headline-lg font-display-lg text-white">0.02%</div>
+<div class="text-label-caps text-on-surface-variant opacity-60">Error Rate</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Activity Log / Raw Stream -->
+<section class="col-span-12">
+<div class="glass-card rounded-2xl overflow-hidden">
+<div class="px-8 py-4 bg-white/5 flex justify-between items-center border-b border-white/10">
+<h3 class="font-title-md text-white">Live Operations Log</h3>
+<div class="flex gap-4">
+<button class="text-body-sm text-primary-container hover:underline">Download Report</button>
+<button class="text-body-sm text-on-surface-variant hover:text-white">Clear Console</button>
+</div>
+</div>
+<div class="p-6 font-mono text-[12px] h-48 overflow-y-auto space-y-1 bg-black/40">
+<div class="flex gap-4 text-on-surface-variant/40">
+<span>[14:22:01]</span>
+<span class="text-tertiary-container">INFO</span>
+<span class="text-on-surface">Initializing secure handshake with AWS S3 Bucket (Discovery-Prod-01)</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant/40">
+<span>[14:22:04]</span>
+<span class="text-tertiary-container">INFO</span>
+<span class="text-on-surface">Connection established. Fetching segment indices 400-800.</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant/40">
+<span>[14:22:08]</span>
+<span class="text-primary-container">WORK</span>
+<span class="text-on-surface">Cleaning module detected 12 malformed JSON nodes. Auto-healing triggered...</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant/40">
+<span>[14:22:12]</span>
+<span class="text-primary-container">WORK</span>
+<span class="text-on-surface">Stage 2 (Cleaning) verified. 100% integrity score achieved.</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant/40">
+<span>[14:22:15]</span>
+<span class="text-primary-container font-bold">LIVE</span>
+<span class="text-white">Orchestrator: Transitioning to Stage 3 (Extracting) - Parallel processing enabled.</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant/40 animate-pulse">
+<span>[14:22:18]</span>
+<span class="text-primary-container">EXEC</span>
+<span class="text-on-surface">Vectorizing semantic patterns in document cluster 7-A...</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<script>
+        function startPipeline(type) {
+            console.log('Starting pipeline: ' + type);
+            const progressBar = document.getElementById('pipeline-progress');
+            let width = 0;
+            progressBar.style.width = '0%';
+            
+            const interval = setInterval(() => {
+                if (width >= 65) {
+                    clearInterval(interval);
+                } else {
+                    width++;
+                    progressBar.style.width = width + '%';
+                }
+            }, 10);
+        }
+
+        // Simple interactive micro-interaction for cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

@@ -172,7 +172,7 @@ Each source has a dedicated connector module. All connectors write to a unified 
 
 | Connector | Build Tier | Library / Method | Dedup Key | Expected Volume |
 |---|---|---|---|---|
-| `app_store` | Tier 1 | `app-store-scraper` / RSS feeds | `source:appstore` + review ID | 500–1000+ |
+| `app_store` | Tier 1 | `serpapi` (Apple App Store Reviews) | `source:appstore` + review ID | 500–1000+ |
 | `play_store` | Tier 1 | `google-play-scraper` | `source:playstore` + review ID | 500–1000+ |
 | `reddit` | Tier 1 (value) | Arctic Shift + PullPush.io (via BAScraper) | `source:reddit` + post/comment ID | 500–1000+ |
 | `youtube` | Tier 1 | YouTube Data API (free quota) | `source:youtube` + comment ID | 500–1000+ |
@@ -266,14 +266,14 @@ Output: CleanedItem (RawItem + cleaning metadata)
 |---|---|---|
 | **Deduplication** | Hash on normalized text (lowercased, whitespace-collapsed) | Exact and near-exact duplicates merged; keep earliest instance |
 | **Language Detection** | `langdetect` or `fasttext` language ID | Classify as `en`, `hi`, `hinglish`, or `other` |
-| **Translation/Normalization** | Groq API call for non-English text | Hinglish/code-mixed → English; regional languages → English. Original text retained in `original_text` field |
-| **Spam Filter** | Rule-based heuristics | Flag promotional content, bot-generated reviews, repeated identical text patterns |
+| **Translation/Normalization** | `deep-translator` package (Google Translate API) | Hinglish/code-mixed → English; regional languages → English. Original text retained in `original_text` field |
+| **Spam Filter** | Rule-based heuristics & regex blocklists | Flag promotional content, adult/crypto spam, B2B/hiring jargon, bot-generated reviews |
 
 #### Hinglish/Code-Mixed Handling
 
 Hinglish is prevalent in Indian app reviews. The pipeline:
 1. Detects code-mixed content via character-set analysis (Devanagari + Latin mix) and `langdetect` confidence thresholds
-2. Sends to Groq for normalization (e.g., "bahut accha product hai but delivery slow tha" → "Very good product but delivery was slow")
+2. Sends to `deep-translator` for sequential normalization (e.g., "bahut accha product hai but delivery slow tha" → "Very good product but delivery was slow")
 3. Stores both `original_text` and `normalized_text`; downstream processing uses `normalized_text`
 
 ---
@@ -285,37 +285,41 @@ Two-stage filter that controls what reaches the vector store. **Nothing is delet
 #### Stage 1: Rule-Based (Zero LLM Cost)
 
 ```python
-CATEGORY_KEYWORDS = [
-    "grocery", "vegetables", "fruit", "dairy", "snack", "electronics",
-    "beauty", "pharmacy", "baby", "pet", "stationery", "kitchen", "books", ...
+# Expanded to separate tech glitches from trust barriers
+TECH_ONLY_VOCAB = [
+    "crash", "lag", "freeze", "login", "otp", "payment fail", "bug",
+    "update", "version", "install", "deducted", "money deducted", ...
 ]
 
 BEHAVIOR_SIGNAL_WORDS = [
     "try", "first time", "always order", "compare", "trust", "quality",
-    "brand", "switch", "discover", "explore", "habit", "reorder", ...
+    "delivery boy", "packaging", "late", "bad experience", ...
 ]
 
-TECH_ONLY_VOCAB = [
-    "crash", "lag", "freeze", "login", "otp", "payment fail", "bug",
-    "update", "version", "install", ...
-]
+GENERIC_PHRASES = ["very good", "good", "nice", "great app", "worst app", ...]
 
 def stage1_filter(item: CleanedItem) -> bool:
     """Returns True if item should proceed to Stage 2 (LLM extraction)."""
     text = item.normalized_text.lower()
+    
+    # Rule 0: Generic Phrase Pruning
+    if clean_text in GENERIC_PHRASES:
+        return False
 
     # Rule 1: Too short AND no category mention → discard
     if len(text) < 25 and not any(kw in text for kw in CATEGORY_KEYWORDS):
         return False
 
-    # Rule 2: Only tech vocabulary AND no behavior signal → discard
+    # Rule 2: Only tech vocabulary AND no behavior signal AND no delivery complaints → discard
     has_tech = any(kw in text for kw in TECH_ONLY_VOCAB)
     has_behavior = any(kw in text for kw in BEHAVIOR_SIGNAL_WORDS)
     if has_tech and not has_behavior:
-        # Exception: delivery/logistics complaints tied to category decisions pass through
-        has_category = any(kw in text for kw in CATEGORY_KEYWORDS)
-        if not has_category:
-            return False
+        return False
+        
+    # Rule 3: Snippeting for long text (e.g. Reddit)
+    if len(text.split()) > 100:
+        # Extract only sentences surrounding keywords to save LLM tokens
+        item.normalized_text = extract_snippets(item.normalized_text)
 
     # Ambiguous → pass through to Stage 2
     return True
@@ -329,7 +333,8 @@ Not a separate call — part of the extraction prompt (Section 4.4). The same LL
 
 ### 4.4 Extraction Layer
 
-A single Groq API call (e.g., Llama-3) per item produces the full Section 5 taxonomy tags **plus** the relevance determination. No second model, no separate classifier.
+A single LLM API call per item produces the full Section 5 taxonomy tags **plus** the relevance determination.
+We use **Gemini as the primary model (`gemini-flash-latest`)** and **Groq as the fallback (`llama-3.3-70b-versatile`)**.
 
 #### Extraction Prompt Design
 
@@ -345,34 +350,25 @@ Input:
 
 Output (JSON):
 {
-  "relevant": boolean,           // Does this text contain signal about category 
-                                 // behavior, discovery, trust, or shopping habits?
-  "category_mentioned": string,  // From canonical list, or "other" / "not stated"
-  "category_tier": string,       // "core" | "exploratory" | "not stated"
-  "behavior_type": string,       // repeat-purchase | habit | one-time-try | 
-                                 // abandoned-attempt | never-tried | not stated
-  "discovery_channel": string,   // app home feed | search | ad | word-of-mouth | 
-                                 // social media | other | not stated
-  "barrier_type": string,        // trust/quality doubt | price anchoring | 
-                                 // lack of info | delivery/logistics concern | 
-                                 // no need perceived | other | not stated
-  "frustration": {
-    "summary": string,
-    "severity": string           // low | med | high | not stated
-  },
-  "unmet_need": string,
-  "segment_signal": string,      // student | working professional | 
-                                 // homemaker/family shopper | elderly/senior | not stated
-  "sentiment": string,           // positive | neutral | negative
-  "source_snippet": string       // exact excerpt supporting the tags
+  "results": [
+    {
+      "relevant": boolean,           // Does this text contain signal about category 
+                                     // behavior, discovery, trust, or shopping habits?
+      "category_mentioned": string,  // From canonical list, or "other" / "not stated"
+      "category_tier": string,       // "core" | "exploratory" | "not stated"
+      ...
+      "source_snippet": string       // exact excerpt supporting the tags
+    }
+  ]
 }
 ```
 
 #### Batching & Cost Control
 
-- **Batch size:** 10–20 items per API call (structured as a JSON array in the prompt)
-- **High Throughput:** system prompt is static → leverage Groq's high-speed inference for repeated calls
-- **Rate limiting:** local retry with exponential backoff; target 500–1000 items/source × 5 sources = 2,500–5,000 total extraction calls (batched to ~250–500 API calls)
+- **Batch size:** 10 items per API call (structured as a JSON array in the prompt)
+- **Primary Model:** Gemini is used as primary due to strong reasoning context length.
+- **Fallback Model:** Groq Llama-3.3-70b is used if Gemini fails or rate limits.
+- **Rate limiting:** 1s sleep per batch. Target 500–1000 items/source × 5 sources = 2,500–5,000 total extraction calls (batched to ~250–500 API calls)
 
 ---
 
@@ -386,7 +382,7 @@ Output (JSON):
 |---|---|
 | **What gets embedded** | Only `relevant: true` items |
 | **Text embedded** | `normalized_text` (not the raw text) |
-| **Embedding model** | `all-MiniLM-L6-v2` via `sentence-transformers` (local, free) or Gemini embeddings API |
+| **Embedding model** | `BAAI/bge-small-en-v1.5` via `sentence-transformers` (local, free) |
 | **Metadata stored alongside embedding** | All taxonomy tags, `source`, `evidence_type`, `item_id`, `source_snippet`, `timestamp` |
 | **Collection structure** | Single collection; filtering via metadata at query time |
 
@@ -494,6 +490,9 @@ A Next.js application deployed to Vercel:
 - Collapsible citation cards showing source snippet, source name, evidence type
 - Source-volume indicator (how many items from each source contributed to the answer)
 - Pre-loaded quick-access buttons for the 8 seed research questions
+- **Pipeline Control Panel**: Expandable panel allowing users to trigger Live Ingestion with two modes:
+  - **Quick Demo Run (🚀)**: Fetches ~30 items per connector for fast testing (~30-45s)
+  - **Full Pipeline Run (⚡)**: Complete dataset ingestion across all sources
 
 ---
 
@@ -779,12 +778,13 @@ blinkit-discovery-engine/
 |---|---|---|
 | **Language** | Python 3.11+ | Ecosystem richness for scraping, ML, APIs |
 | **Web framework** | FastAPI | Async, streaming SSE support, lightweight |
-| **LLM (extraction)** | Groq API (e.g., Llama-3) | High-speed structured output, low cost |
+| **LLM (extraction)** | Gemini API (primary) & Groq API (fallback) | High-speed structured output, fault-tolerant |
 | **LLM (synthesis)** | Gemini API (Google) | High-quality reasoning and synthesis |
 | **Vector store** | ChromaDB | Local persistence, simple API, zero-infra |
 | **Embeddings** | `sentence-transformers` (`all-MiniLM-L6-v2`) | Free, local, fast; sufficient quality for this scale |
-| **Scraping** | `google-play-scraper`, `app-store-scraper`, BAScraper (Arctic Shift + PullPush), BeautifulSoup, requests | Free, no auth/API key required for Tier 1 |
+| **Scraping** | `google-play-scraper`, `serpapi`, BAScraper (Arctic Shift + PullPush) | SerpApi handles Apple App Store reviews, rest are free |
 | **Language detection** | `langdetect` or `fasttext` | Lightweight, handles Hinglish detection |
+| **Translation** | `deep-translator` | Google Translate without API costs |
 | **Frontend** | Next.js (React) | Modern component architecture, seamless routing |
 | **Deployment** | Vercel (Frontend) + Railway (Backend) | Free tier hosting for both |
 | **Containerization** | Docker | Reproducible deployment to Railway |
@@ -798,6 +798,7 @@ uvicorn>=0.23.0
 groq>=0.9.0                 # Groq API client
 google-generativeai>=0.5.0  # Gemini API client
 chromadb>=0.4.0
+deep-translator>=1.11.0     # For translation
 sentence-transformers>=2.2.0
 pydantic>=2.0
 
@@ -934,15 +935,17 @@ Trigger a background ingestion task. Requires admin authentication.
 **Request:**
 ```json
 {
-  "sources": ["reddit", "playstore"],
-  "limit": 100
+  "mode": "demo", // or "full"
+  "sources": ["reddit", "playstore"], // optional override
+  "limit": 100 // optional override
 }
 ```
+*Note: `mode` dictates the scale. "demo" limits items to ~30 per connector for quick testing (~30-45s). "full" runs full-scale scraping.*
 
 ```
 GET /api/ingest/status
 ```
-Returns the status of the currently running ingestion job (if any).
+Returns the status of the currently running ingestion job (if any), including progress message, mode, and processed counts.
 
 ---
 

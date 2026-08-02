@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blinkit Discovery Engine | Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#2e2a20",
+                        "on-surface": "#eae1d3",
+                        "on-surface-variant": "#d1c5ae",
+                        "on-background": "#eae1d3",
+                        "on-primary-fixed": "#241a00",
+                        "primary-container": "#f8cb46",
+                        "tertiary-fixed": "#aeecff",
+                        "tertiary-container": "#64e0ff",
+                        "on-secondary-container": "#b4b5b5",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#58d6f5",
+                        "secondary-container": "#454747",
+                        "error-container": "#93000a",
+                        "outline-variant": "#4e4634",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "on-tertiary-fixed": "#001f26",
+                        "on-primary": "#3d2e00",
+                        "inverse-primary": "#755b00",
+                        "surface-tint": "#edc13d",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-variant": "#39342a",
+                        "surface-container-lowest": "#110e06",
+                        "surface-bright": "#3d392f",
+                        "tertiary": "#cdf3ff",
+                        "on-primary-fixed-variant": "#584400",
+                        "secondary": "#c6c6c7",
+                        "primary": "#ffebbc",
+                        "surface-container-low": "#1f1b12",
+                        "surface": "#16130b",
+                        "error": "#ffb4ab",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-tertiary-container": "#006274",
+                        "primary-fixed": "#ffe08f",
+                        "surface-container": "#231f16",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-secondary": "#2f3131",
+                        "inverse-surface": "#eae1d3",
+                        "surface-container-highest": "#39342a",
+                        "on-error": "#690005",
+                        "on-tertiary": "#003641",
+                        "primary-fixed-dim": "#edc13d",
+                        "background": "#16130b",
+                        "inverse-on-surface": "#343026",
+                        "outline": "#9a907b",
+                        "on-primary-container": "#6e5600",
+                        "surface-dim": "#16130b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-gap": "20px",
+                        "container-padding": "32px",
+                        "gutter": "24px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Outfit"],
+                        "headline-lg-mobile": ["Outfit"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Outfit"],
+                        "title-md": ["Outfit"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #16130b;
+            color: #eae1d3;
+            overflow: hidden;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(248, 203, 70, 0.2);
+            border-radius: 10px;
+        }
+        .typing-dot {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(248, 203, 70, 0.05), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="font-body-lg text-on-surface">
+<!-- Sidebar Navigation (From JSON) -->
+<aside class="fixed left-0 top-0 h-full w-64 z-50 bg-surface/20 backdrop-blur-2xl border-r border-white/10 flex flex-col py-8 px-4 gap-y-6 hidden md:flex shadow-2xl">
+<div class="flex items-center gap-3 px-2">
+<img alt="Blinkit Discovery Engine" class="w-10 h-10 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwmqwse4n-0VMlo3fwoeW1z7y3AxMFphJhq5hdp4meFYJ5ez5fEs5PPjpHPHJCwdjHuELNpiHS3Kj6TEz5QF_rwICkZaCSs-ite8B0ZN_C5K2xgb1A_pBYuVFhgRi4tyyQ2GzsD5xNzFM-xteUddSuSxzdQWNjwk3yjxvJaJVR1LwaL5Qr7X6YHnUdOCB0wvhWJJDGlRczWb2FVIW2JHYaRq2LkAWKJXb7cVtGCg9YJUpCdMHu-yAFJA"/>
+<div>
+<h1 class="font-display-lg text-primary-fixed font-bold text-title-md leading-none">Blinkit</h1>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest mt-1">Discovery Engine</p>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+            New Analysis
+        </button>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all duration-200 cubic-bezier(0.22, 1, 0.36, 1)" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all duration-200" href="#">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="font-label-caps text-label-caps">Pipeline</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-container/10 text-primary-container border-l-4 border-primary-container transition-all duration-200" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-label-caps text-label-caps">Chat</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-white/5 pt-6 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top Navigation (Mobile/Responsive) -->
+<header class="fixed top-0 w-full z-40 bg-surface/10 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-6 h-20 md:pl-72">
+<div class="flex items-center gap-4">
+<span class="md:hidden material-symbols-outlined text-primary-container">menu</span>
+<span class="font-title-md text-title-md font-bold text-primary-fixed">Discovery Chat</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden sm:flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary-container cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary-container cursor-pointer">settings</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close up professional headshot of a data scientist in a modern studio setting with warm amber backlighting and a high-tech minimalist background in the style of a premium tech platform. Dark mode aesthetic with sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiDCOrWABm6P6aX2_EFEj2M2Gqc1Nen_kDiYAfgxFvzoDdp1BWDyaDCQ-OR-sZLr2Yoe98PlcBPSYM2tOECKDhblZtkB7c89tP_N004nN4JYErCUnIn7vZCrcVH0bO52GjUu8YmO8sONfvrHFPtSPkOGJTyyb2SeeaY_D2Fuh-bnuobz8qEcNnt4F6VRsoPo3Qd3MlhUWX0waShJzDwIgMjIIi5gxiuJCmWzeR3QTyYoqpfPdk6uxTOQ"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="h-screen pt-20 md:pl-64 flex flex-col relative overflow-hidden">
+<!-- Subtle Watermark Background -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+<img alt="Blinkit Discovery Engine Watermark" class="w-[600px] h-[600px] grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwmqwse4n-0VMlo3fwoeW1z7y3AxMFphJhq5hdp4meFYJ5ez5fEs5PPjpHPHJCwdjHuELNpiHS3Kj6TEz5QF_rwICkZaCSs-ite8B0ZN_C5K2xgb1A_pBYuVFhgRi4tyyQ2GzsD5xNzFM-xteUddSuSxzdQWNjwk3yjxvJaJVR1LwaL5Qr7X6YHnUdOCB0wvhWJJDGlRczWb2FVIW2JHYaRq2LkAWKJXb7cVtGCg9YJUpCdMHu-yAFJA"/>
+</div>
+<!-- Chat Area -->
+<div class="flex-1 overflow-y-auto px-6 py-8 chat-container flex flex-col gap-8 max-w-4xl mx-auto w-full z-10" id="chat-container">
+<!-- Empty State / Welcome -->
+<div class="mt-12 text-center space-y-10" id="empty-state">
+<div class="space-y-4">
+<h2 class="font-display-lg text-headline-lg text-on-surface">How can I help your research today?</h2>
+<p class="text-on-surface-variant max-w-lg mx-auto">Access millions of user data points across Reddit, Play Store, and internal surveys through our RAG-enhanced intelligence engine.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+<button class="glass-card p-4 rounded-xl hover:border-primary-container/50 hover:bg-white/5 transition-all text-left group">
+<p class="text-sm font-medium text-on-surface group-hover:text-primary-container">Why do users repeatedly buy from the same categories?</p>
+<span class="text-xs text-on-surface-variant mt-2 block">Habit formation &amp; Trust</span>
+</button>
+<button class="glass-card p-4 rounded-xl hover:border-primary-container/50 hover:bg-white/5 transition-all text-left group">
+<p class="text-sm font-medium text-on-surface group-hover:text-primary-container">What prevents users from exploring new categories?</p>
+<span class="text-xs text-on-surface-variant mt-2 block">Barriers &amp; Friction points</span>
+</button>
+<button class="glass-card p-4 rounded-xl hover:border-primary-container/50 hover:bg-white/5 transition-all text-left group">
+<p class="text-sm font-medium text-on-surface group-hover:text-primary-container">How do users discover products today?</p>
+<span class="text-xs text-on-surface-variant mt-2 block">Marketing &amp; UI efficiency</span>
+</button>
+<button class="glass-card p-4 rounded-xl hover:border-primary-container/50 hover:bg-white/5 transition-all text-left group">
+<p class="text-sm font-medium text-on-surface group-hover:text-primary-container">What role do habits play in shopping behavior?</p>
+<span class="text-xs text-on-surface-variant mt-2 block">Loyalty metrics</span>
+</button>
+</div>
+</div>
+<!-- Chat Bubbles Placeholder (Hidden by default, shown for demo structure) -->
+<div class="flex flex-col gap-6 hidden">
+<!-- AI Message -->
+<div class="flex flex-col gap-3 max-w-[85%] self-start">
+<div class="flex items-center gap-2 mb-1">
+<div class="w-6 h-6 rounded-md bg-primary-container flex items-center justify-center">
+<img alt="AI" class="w-4 h-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwmqwse4n-0VMlo3fwoeW1z7y3AxMFphJhq5hdp4meFYJ5ez5fEs5PPjpHPHJCwdjHuELNpiHS3Kj6TEz5QF_rwICkZaCSs-ite8B0ZN_C5K2xgb1A_pBYuVFhgRi4tyyQ2GzsD5xNzFM-xteUddSuSxzdQWNjwk3yjxvJaJVR1LwaL5Qr7X6YHnUdOCB0wvhWJJDGlRczWb2FVIW2JHYaRq2LkAWKJXb7cVtGCg9YJUpCdMHu-yAFJA"/>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-primary-fixed">Engine Analysis</span>
+</div>
+<div class="glass-card p-5 rounded-2xl rounded-tl-none space-y-4">
+<p>Based on our analysis of recent community discussions, users often hesitate to explore new categories due to <strong>choice paralysis</strong> and a lack of comparative data at the point of purchase.</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface-container-high border border-white/10 rounded text-[10px] text-on-surface-variant hover:border-primary-container cursor-pointer transition-colors">[Source: Reddit]</span>
+<span class="px-2 py-1 bg-surface-container-high border border-white/10 rounded text-[10px] text-on-surface-variant hover:border-primary-container cursor-pointer transition-colors">[Source: Play Store Reviews]</span>
+<span class="px-2 py-1 bg-surface-container-high border border-white/10 rounded text-[10px] text-on-surface-variant hover:border-primary-container cursor-pointer transition-colors">[Source: Internal Survey Q3]</span>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex flex-col gap-3 max-w-[80%] self-end items-end">
+<div class="bg-primary-container text-on-primary-container p-4 rounded-2xl rounded-tr-none font-medium">
+                        What information do users need before trying a new category?
+                    </div>
+<span class="text-[10px] text-on-surface-variant">Just now</span>
+</div>
+</div>
+</div>
+<!-- Input Section -->
+<div class="p-6 bg-gradient-to-t from-background via-background to-transparent z-20">
+<div class="max-w-4xl mx-auto relative group">
+<div class="absolute -inset-0.5 bg-gradient-to-r from-primary-container/20 to-tertiary-container/20 rounded-2xl blur opacity-30 group-focus-within:opacity-100 transition duration-500"></div>
+<div class="relative glass-card rounded-2xl flex items-center p-2 pr-3 shadow-2xl">
+<div class="pl-4 flex items-center gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</div>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-on-surface py-4 px-3 placeholder:text-on-surface-variant/50" placeholder="Ask anything about user behavior..." type="text"/>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-lg hover:bg-white/5 text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="bg-primary-container text-on-primary-container p-3 rounded-xl shadow-lg shadow-primary-container/10 hover:shadow-primary-container/20 transition-all active:scale-95 flex items-center justify-center">
+<span class="material-symbols-outlined font-bold">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="flex justify-center mt-4 gap-6">
+<div class="flex items-center gap-2 text-[10px] text-on-surface-variant/60">
+<span class="material-symbols-outlined text-xs">verified</span>
+                        Citations included
+                    </div>
+<div class="flex items-center gap-2 text-[10px] text-on-surface-variant/60">
+<span class="material-symbols-outlined text-xs">bolt</span>
+                        Real-time RAG
+                    </div>
+<div class="flex items-center gap-2 text-[10px] text-on-surface-variant/60">
+<span class="material-symbols-outlined text-xs">shield</span>
+                        Privacy secure
+                    </div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Typing Indicator (Contextual) -->
+<div class="fixed bottom-32 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-full border border-white/10 opacity-0 transition-opacity pointer-events-none" id="typing-indicator">
+<div class="flex gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container typing-dot"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container typing-dot" style="animation-delay: 0.2s"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container typing-dot" style="animation-delay: 0.4s"></div>
+</div>
+<span class="text-xs text-on-surface-variant font-mono">Blinkit Engine is thinking...</span>
+</div>
+<script>
+        const chatInput = document.querySelector('input');
+        const emptyState = document.getElementById('empty-state');
+        const chatContainer = document.getElementById('chat-container');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                handleSendMessage(chatInput.value);
+                chatInput.value = '';
+            }
+        });
+
+        function handleSendMessage(text) {
+            if(emptyState) emptyState.classList.add('hidden');
+            
+            // Render User Bubble
+            const userMsg = `
+                <div class="flex flex-col gap-3 max-w-[80%] self-end items-end animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div class="bg-primary-container text-on-primary-container p-4 rounded-2xl rounded-tr-none font-medium shadow-xl">
+                        ${text}
+                    </div>
+                    <span class="text-[10px] text-on-surface-variant">Just now</span>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', userMsg);
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+
+            // Show Typing Indicator
+            typingIndicator.classList.remove('opacity-0');
+            
+            // Simulate AI Response
+            setTimeout(() => {
+                typingIndicator.classList.add('opacity-0');
+                const aiMsg = `
+                    <div class="flex flex-col gap-3 max-w-[85%] self-start animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="w-6 h-6 rounded-md bg-primary-container flex items-center justify-center">
+                                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwmqwse4n-0VMlo3fwoeW1z7y3AxMFphJhq5hdp4meFYJ5ez5fEs5PPjpHPHJCwdjHuELNpiHS3Kj6TEz5QF_rwICkZaCSs-ite8B0ZN_C5K2xgb1A_pBYuVFhgRi4tyyQ2GzsD5xNzFM-xteUddSuSxzdQWNjwk3yjxvJaJVR1LwaL5Qr7X6YHnUdOCB0wvhWJJDGlRczWb2FVIW2JHYaRq2LkAWKJXb7cVtGCg9YJUpCdMHu-yAFJA" class="w-4 h-4" alt="AI">
+                            </div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-primary-fixed">Engine Analysis</span>
+                        </div>
+                        <div class="glass-card p-5 rounded-2xl rounded-tl-none space-y-4 shadow-2xl relative overflow-hidden">
+                            <div class="shimmer absolute inset-0 opacity-10 pointer-events-none"></div>
+                            <p class="relative">Analyzing your query regarding <strong>"${text}"</strong> across our distributed database. Primary signals suggest that recurring patterns in user sentiment point towards an increasing demand for transparent sourcing and immediate utility metrics.</p>
+                            <div class="flex flex-wrap gap-2 relative">
+                                <span class="px-2 py-1 bg-surface-container-high border border-white/10 rounded text-[10px] text-on-surface-variant hover:border-primary-container cursor-pointer transition-colors">[Source: Reddit Trend Cluster]</span>
+                                <span class="px-2 py-1 bg-surface-container-high border border-white/10 rounded text-[10px] text-on-surface-variant hover:border-primary-container cursor-pointer transition-colors">[Source: Play Store Feedback]</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatContainer.insertAdjacentHTML('beforeend', aiMsg);
+                chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+            }, 1800);
+        }
+
+        // Handle Suggetions Click
+        document.querySelectorAll('#empty-state button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const query = btn.querySelector('p').innerText;
+                handleSendMessage(query);
+            });
+        });
+    </script>
+</body></html>

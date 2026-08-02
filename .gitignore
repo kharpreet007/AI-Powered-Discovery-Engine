@@ -28,3 +28,8 @@ frontend/out/
 
 # Docker
 *.log
+venv/
+venv312/
+chroma_db/
+client/node_modules/
+client/.next/

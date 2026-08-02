@@ -449,35 +449,6 @@ python -m pipeline export-snapshot    # Packages chroma_snapshot/ for deployment
 - [ ] Contradictory evidence produces a split answer with counts (FR13)
 - [ ] `/api/ingest` requires admin token — returns 401 without it
 - [ ] `/api/ingest` runs pipeline in background; `/api/ingest/status` reports progress
-- [ ] `/api/health` confirms ChromaDB is loaded with correct collection count
-
----
-
-## Phase 7 — Next.js Frontend
-
-**Goal:** Build a premium, visually striking chat interface deployed to Vercel.
-**Maps to:** Architecture §4.6 (Chat UI), PRD §8 (FR9/FR10)
-**Estimated time:** ~5–6 hours
-
-### 7.1 Initialize Next.js Project
-
-```bash
-npx -y create-next-app@latest frontend --app --src-dir --ts --no-tailwind
-```
-
-### 7.2 Core Components
-
-#### [NEW] `frontend/src/app/page.tsx` — Main Chat Page
-
-- Full-screen chat interface with dark mode aesthetic
-- Pre-loaded quick-access buttons for the 8 seed research questions
-- Text input with send button at the bottom
-
-#### [NEW] `frontend/src/components/ChatMessage.tsx`
-
-- User message bubble (right-aligned)
-- AI response bubble (left-aligned) with streaming text display
-- Parses SSE `token` events and appends text in real-time
 
 #### [NEW] `frontend/src/components/CitationCard.tsx`
 

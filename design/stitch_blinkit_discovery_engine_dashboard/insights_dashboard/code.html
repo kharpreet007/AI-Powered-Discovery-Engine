@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blinkit Discovery Engine | Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Outfit:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#2e2a20",
+                    "on-surface": "#eae1d3",
+                    "on-surface-variant": "#d1c5ae",
+                    "on-background": "#eae1d3",
+                    "on-primary-fixed": "#241a00",
+                    "primary-container": "#f8cb46",
+                    "tertiary-fixed": "#aeecff",
+                    "tertiary-container": "#64e0ff",
+                    "on-secondary-container": "#b4b5b5",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#58d6f5",
+                    "secondary-container": "#454747",
+                    "error-container": "#93000a",
+                    "outline-variant": "#4e4634",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "on-tertiary-fixed": "#001f26",
+                    "on-primary": "#3d2e00",
+                    "inverse-primary": "#755b00",
+                    "surface-tint": "#edc13d",
+                    "secondary-fixed": "#e2e2e2",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "surface-variant": "#39342a",
+                    "surface-container-lowest": "#110e06",
+                    "surface-bright": "#3d392f",
+                    "tertiary": "#cdf3ff",
+                    "on-primary-fixed-variant": "#584400",
+                    "secondary": "#c6c6c7",
+                    "primary": "#ffebbc",
+                    "surface-container-low": "#1f1b12",
+                    "surface": "#16130b",
+                    "error": "#ffb4ab",
+                    "secondary-fixed-dim": "#c6c6c7",
+                    "on-tertiary-container": "#006274",
+                    "primary-fixed": "#ffe08f",
+                    "surface-container": "#231f16",
+                    "on-secondary-fixed-variant": "#454747",
+                    "on-secondary": "#2f3131",
+                    "inverse-surface": "#eae1d3",
+                    "surface-container-highest": "#39342a",
+                    "on-error": "#690005",
+                    "on-tertiary": "#003641",
+                    "primary-fixed-dim": "#edc13d",
+                    "background": "#16130b",
+                    "inverse-on-surface": "#343026",
+                    "outline": "#9a907b",
+                    "on-primary-container": "#6e5600",
+                    "surface-dim": "#16130b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-gap": "20px",
+                    "container-padding": "32px",
+                    "gutter": "24px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "display-lg": ["Outfit"],
+                    "headline-lg-mobile": ["Outfit"],
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Outfit"],
+                    "title-md": ["Outfit"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-panel:hover {
+            border-color: rgba(248, 203, 70, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .funnel-step {
+            clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%, 10% 50%);
+        }
+        .glow-yellow {
+            box-shadow: 0 0 15px rgba(248, 203, 70, 0.2);
+        }
+        .animate-engine {
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #000000;
+            color: #eae1d3;
+            overflow-x: hidden;
+        }
+        .bg-bloom {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(248, 203, 70, 0.05) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="font-body-lg">
+<div class="bg-bloom top-[-10%] left-[-10%]"></div>
+<div class="bg-bloom bottom-[-10%] right-[-10%]"></div>
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-full w-64 z-50 bg-surface/20 backdrop-blur-2xl border-r border-white/10 shadow-2xl flex flex-col py-8 px-4 gap-y-6 hidden md:flex">
+<div class="flex items-center gap-3 px-2">
+<img alt="Blinkit Discovery Engine Logo" class="w-10 h-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwmqwse4n-0VMlo3fwoeW1z7y3AxMFphJhq5hdp4meFYJ5ez5fEs5PPjpHPHJCwdjHuELNpiHS3Kj6TEz5QF_rwICkZaCSs-ite8B0ZN_C5K2xgb1A_pBYuVFhgRi4tyyQ2GzsD5xNzFM-xteUddSuSxzdQWNjwk3yjxvJaJVR1LwaL5Qr7X6YHnUdOCB0wvhWJJDGlRczWb2FVIW2JHYaRq2LkAWKJXb7cVtGCg9YJUpCdMHu-yAFJA"/>
+<div>
+<h1 class="font-display-lg text-primary-fixed font-bold text-[20px] leading-tight">Blinkit</h1>
+<p class="text-[10px] text-on-surface-variant tracking-widest uppercase">Discovery Engine</p>
+</div>
+</div>
+<button class="mt-4 py-3 px-4 bg-primary-container text-on-primary-container font-bold rounded-xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 animate-engine">
+<span class="material-symbols-outlined">add</span>
+            New Analysis
+        </button>
+<nav class="flex flex-col gap-1 mt-6">
+<a class="bg-primary-container/10 text-primary-container border-l-4 border-primary-container flex items-center gap-3 py-3 px-4 animate-engine" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<a class="text-on-surface-variant hover:bg-white/5 hover:text-on-surface flex items-center gap-3 py-3 px-4 animate-engine" href="#">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="font-label-caps text-label-caps">Pipeline</span>
+</a>
+<a class="text-on-surface-variant hover:bg-white/5 hover:text-on-surface flex items-center gap-3 py-3 px-4 animate-engine" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-label-caps text-label-caps">Chat</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-1">
+<a class="text-on-surface-variant hover:bg-white/5 hover:text-on-surface flex items-center gap-3 py-3 px-4 animate-engine" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-caps text-label-caps">Docs</span>
+</a>
+<a class="text-on-surface-variant hover:bg-white/5 hover:text-on-surface flex items-center gap-3 py-3 px-4 animate-engine" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar (Authority: JSON) -->
+<header class="fixed top-0 w-full z-40 bg-surface/10 backdrop-blur-xl border-b border-white/10 h-20 transition-all duration-300">
+<div class="flex justify-between items-center px-container-padding h-full max-w-[1600px] mx-auto md:pl-72">
+<div class="flex items-center gap-8">
+<h2 class="font-display-lg text-headline-lg tracking-tighter text-primary-fixed hidden lg:block">Insights Overview</h2>
+<div class="flex gap-6 items-center">
+<a class="text-primary-container border-b-2 border-primary-container pb-2 transition-all font-title-md text-title-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-title-md text-title-md" href="#">Pipeline</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-title-md text-title-md" href="#">Chat</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<input class="bg-white/5 border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:border-primary-container outline-none focus:ring-1 focus:ring-primary-container w-64 animate-engine" placeholder="Search insights..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary-container animate-engine">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary-container animate-engine">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a high-tech corporate professional user, softly lit with cinematic amber and deep grey tones, sharp focus, professional photography style, consistent with a premium dark mode UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9Mk3VXNtgwIj7pKu4H_es8D7WPD_ce_Ffy5NyNM7UBhfYjzYTpnb3z82mlNXIUJs2lpbfBuCHuOa8ESEFRz6wAxGLvaONQW61tshp-4V70giZBrz4-E8eBhU9u0RSNOO2AvGykotyxAokojnc91V1gb-h7Q-jPZ6UCepGg-T3w_Hm9F7lIfBYnUlztxK3o1oG5grQwaWXVkO5Uo7k_n0B2Rk5GwRkIW8sFusRFvFpPXPacQENw8obMg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="md:pl-64 pt-20 min-h-screen">
+<div class="max-w-[1600px] mx-auto px-container-padding py-8 space-y-8">
+<!-- Hero Stats & Volume Funnel -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<div class="lg:col-span-8 glass-panel rounded-xl p-8 overflow-hidden relative">
+<div class="flex justify-between items-start mb-10">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-white mb-2">Volume Funnel</h3>
+<p class="text-on-surface-variant text-body-sm">Data processing stages from raw ingestion to theme classification.</p>
+</div>
+<div class="text-right">
+<span class="text-primary-fixed font-bold text-headline-lg">147</span>
+<p class="text-on-surface-variant text-[10px] tracking-widest uppercase">Tagged Themes</p>
+</div>
+</div>
+<!-- Funnel Visual -->
+<div class="relative flex items-center justify-between gap-1 h-32 mt-4">
+<div class="flex-1 glass-panel h-full flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary-container/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+<span class="font-display-lg text-white text-[24px]">1500</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Raw Data</span>
+</div>
+<div class="w-8 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="flex-1 glass-panel h-full flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary-container/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+<span class="font-display-lg text-white text-[24px]">1200</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Cleaned</span>
+</div>
+<div class="w-8 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="flex-1 glass-panel h-full flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary-container/15 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+<span class="font-display-lg text-white text-[24px]">800</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Relevant</span>
+</div>
+<div class="w-8 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="flex-1 glass-panel h-full flex flex-col items-center justify-center relative border-primary-container/30 border-2 overflow-hidden group">
+<div class="absolute inset-0 bg-primary-container/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+<span class="font-display-lg text-primary-container text-[24px]">147</span>
+<span class="text-[10px] text-primary-container uppercase font-bold tracking-tighter">Tagged</span>
+</div>
+</div>
+</div>
+<!-- Validation Metrics -->
+<div class="lg:col-span-4 flex flex-col gap-gutter">
+<div class="glass-panel rounded-xl p-6 flex-1 flex flex-col justify-between group">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant font-label-caps text-label-caps">Confidence Score</span>
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-4">
+<div class="text-[48px] font-display-lg text-white leading-none">94%</div>
+<div class="w-full h-2 bg-white/10 rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-primary-container glow-yellow w-[94%] animate-engine origin-left"></div>
+</div>
+</div>
+<p class="text-on-surface-variant text-body-sm mt-4">Statistically significant agreement across 12 unique LLM validation agents.</p>
+</div>
+<div class="glass-panel rounded-xl p-6 flex-1 flex flex-col justify-between">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant font-label-caps text-label-caps">Citation Density</span>
+<span class="material-symbols-outlined text-tertiary-container">link</span>
+</div>
+<div class="mt-4 flex items-end gap-2">
+<div class="text-[48px] font-display-lg text-white leading-none">8.4</div>
+<span class="text-on-surface-variant mb-2">refs / theme</span>
+</div>
+<div class="flex gap-1 mt-4">
+<div class="h-1 flex-1 bg-tertiary-container/40"></div>
+<div class="h-1 flex-1 bg-tertiary-container/60"></div>
+<div class="h-1 flex-1 bg-tertiary-container/80"></div>
+<div class="h-1 flex-1 bg-tertiary-container"></div>
+<div class="h-1 flex-1 bg-white/10"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Source Breakdown -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h3 class="font-headline-lg text-headline-lg text-white">Source Breakdown</h3>
+<button class="text-primary-container text-body-sm hover:underline">Manage Sources</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- YouTube -->
+<div class="glass-panel rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-red-600/10 blur-3xl rounded-full transition-all group-hover:scale-150"></div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-red-600/20 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined">play_circle</span>
+</div>
+<span class="font-title-md text-white">YouTube</span>
+</div>
+<div class="text-[32px] font-display-lg text-white">97</div>
+<p class="text-on-surface-variant text-[10px] uppercase font-bold">Comments Parsed</p>
+</div>
+<!-- Play Store -->
+<div class="glass-panel rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-green-500/10 blur-3xl rounded-full transition-all group-hover:scale-150"></div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
+<span class="material-symbols-outlined">replace_image</span>
+</div>
+<span class="font-title-md text-white">Play Store</span>
+</div>
+<div class="text-[32px] font-display-lg text-white">50</div>
+<p class="text-on-surface-variant text-[10px] uppercase font-bold">Reviews Scanned</p>
+</div>
+<!-- Reddit -->
+<div class="glass-panel rounded-xl p-6 opacity-60">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-orange-600/10 flex items-center justify-center text-orange-400">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<span class="font-title-md text-white">Reddit</span>
+</div>
+<div class="text-[32px] font-display-lg text-white">0</div>
+<p class="text-on-surface-variant text-[10px] uppercase font-bold">No data detected</p>
+</div>
+<!-- App Store -->
+<div class="glass-panel rounded-xl p-6 opacity-60">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-blue-400/10 flex items-center justify-center text-blue-300">
+<span class="material-symbols-outlined">file_download</span>
+</div>
+<span class="font-title-md text-white">App Store</span>
+</div>
+<div class="text-[32px] font-display-lg text-white">0</div>
+<p class="text-on-surface-variant text-[10px] uppercase font-bold">Connecting API...</p>
+</div>
+</div>
+</section>
+<!-- Emergent Themes Panel -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-white">Emergent Themes</h3>
+<p class="text-on-surface-variant text-body-sm">AI-identified clusters with high frequency and impact.</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:border-primary-container text-body-sm animate-engine">Export CSV</button>
+<button class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:border-primary-container text-body-sm animate-engine">Sort: Impact</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<!-- Theme 1 -->
+<div class="glass-panel rounded-xl p-6 group cursor-pointer animate-engine hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="px-3 py-1 bg-primary-container/20 border border-primary-container/40 rounded-full text-[10px] text-primary-container font-bold uppercase">High Impact</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-container transition-colors">open_in_new</span>
+</div>
+<h4 class="font-headline-lg text-[20px] text-white mb-2">Price Sensitivity</h4>
+<p class="text-on-surface-variant text-body-sm mb-6 line-clamp-2">Users are increasingly mentioning surge pricing during evening peak hours in Mumbai and Bangalore hubs.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-background bg-red-600/40 flex items-center justify-center"><span class="text-[12px] font-bold">YT</span></div>
+<div class="w-8 h-8 rounded-full border-2 border-background bg-green-600/40 flex items-center justify-center"><span class="text-[12px] font-bold">PS</span></div>
+</div>
+<div class="text-right">
+<span class="text-white font-bold">42 Mentions</span>
+<div class="w-24 h-1.5 bg-white/10 rounded-full mt-1">
+<div class="h-full bg-primary-container w-[75%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Theme 2 -->
+<div class="glass-panel rounded-xl p-6 group cursor-pointer animate-engine hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="px-3 py-1 bg-tertiary-container/20 border border-tertiary-container/40 rounded-full text-[10px] text-tertiary-container font-bold uppercase">UX Friction</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-tertiary-container transition-colors">open_in_new</span>
+</div>
+<h4 class="font-headline-lg text-[20px] text-white mb-2">App UI Confusion</h4>
+<p class="text-on-surface-variant text-body-sm mb-6 line-clamp-2">Difficulty finding the 'Blinkit Gold' benefits section after recent v4.2 update. Majority from iOS users.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-background bg-blue-600/40 flex items-center justify-center"><span class="text-[12px] font-bold">AS</span></div>
+</div>
+<div class="text-right">
+<span class="text-white font-bold">28 Mentions</span>
+<div class="w-24 h-1.5 bg-white/10 rounded-full mt-1">
+<div class="h-full bg-tertiary-container w-[50%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Theme 3 -->
+<div class="glass-panel rounded-xl p-6 group cursor-pointer animate-engine hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="px-3 py-1 bg-error-container/20 border border-error-container/40 rounded-full text-[10px] text-error font-bold uppercase">Critical</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-error transition-colors">open_in_new</span>
+</div>
+<h4 class="font-headline-lg text-[20px] text-white mb-2">Delivery Delays</h4>
+<p class="text-on-surface-variant text-body-sm mb-6 line-clamp-2">Negative sentiment spike related to 10-minute promise failures during rain in NCR regions.</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-background bg-red-600/40 flex items-center justify-center"><span class="text-[12px] font-bold">YT</span></div>
+<div class="w-8 h-8 rounded-full border-2 border-background bg-green-600/40 flex items-center justify-center"><span class="text-[12px] font-bold">PS</span></div>
+</div>
+<div class="text-right">
+<span class="text-white font-bold">65 Mentions</span>
+<div class="w-24 h-1.5 bg-white/10 rounded-full mt-1">
+<div class="h-full bg-error w-[90%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Interactive Elements & Micro-animations Script -->
+<script>
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // Simple enter animation for cards
+        window.addEventListener('load', () => {
+            const cards = document.querySelectorAll('.glass-panel');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * index);
+            });
+        });
+    </script>
+</body></html>

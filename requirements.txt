@@ -13,7 +13,6 @@ google-play-scraper>=1.0.0
 app-store-scraper>=0.3.5
 git+https://github.com/maxjo020418/BAScraper.git@main#egg=BAScraper
 beautifulsoup4>=4.12.0
-requests>=2.31.0
 
 # NLP
 langdetect>=1.0.9
@@ -24,3 +23,6 @@ google-api-python-client>=2.0
 # Dev
 pytest>=7.0
 python-dotenv>=1.0
+deep-translator>=1.11.0
+httpx>=0.23.0
+sse-starlette>=2.0.0

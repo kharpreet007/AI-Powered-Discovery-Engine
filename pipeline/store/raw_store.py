@@ -39,7 +39,7 @@ class RawStore:
         # Write back
         with open(file_path, "w", encoding="utf-8") as f:
             for obj in items.values():
-                f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+                f.write(json.dumps(obj, ensure_ascii=False, default=str) + "\n")
 
     def get_all(self, source: Optional[str] = None) -> List[Dict[str, Any]]:
         """Read items, optionally filtered by source."""
