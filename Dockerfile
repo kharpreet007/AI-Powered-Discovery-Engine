@@ -16,4 +16,4 @@ COPY data/ data/
 ENV PYTHONUNBUFFERED=1
 
 # Run FastAPI server
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-8000}
