@@ -26,3 +26,7 @@ python-dotenv>=1.0
 deep-translator>=1.11.0
 httpx>=0.23.0
 sse-starlette>=2.0.0
+
+# Pinned to fix urllib3 v2 incompatibility with app-store-scraper
+urllib3>=1.26.0,<2
+requests>=2.31.0,<3
