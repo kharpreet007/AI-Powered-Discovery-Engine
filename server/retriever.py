@@ -3,7 +3,6 @@ import logging
 from typing import List, Dict, Any, Optional
 
 import chromadb
-from sentence_transformers import SentenceTransformer
 
 from pipeline.store.vector_store import vector_store
 
@@ -27,7 +26,17 @@ class RetrievedItem:
 class Retriever:
     def __init__(self):
         self.client = vector_store.client
-        self.model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+        self._model = None  # Lazy-loaded to save ~300MB RAM at idle
+        
+    @property
+    def model(self):
+        """Lazily load the SentenceTransformer model on first use."""
+        if self._model is None:
+            logger.info("Lazy-loading SentenceTransformer model (first query)...")
+            from sentence_transformers import SentenceTransformer
+            self._model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+            logger.info("SentenceTransformer model loaded successfully.")
+        return self._model
         
     @property
     def collection(self):
@@ -102,3 +111,4 @@ class Retriever:
 
 # Global instance
 retriever = Retriever()
+

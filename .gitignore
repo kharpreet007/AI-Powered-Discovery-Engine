@@ -8,10 +8,7 @@ dist/
 build/
 *.egg
 
-# Data (local pipeline output — large, not for version control)
-data/raw/
-data/tagged/
-data/chroma_snapshot/
+# Data (only exclude logs)
 data/logs/
 
 # IDE

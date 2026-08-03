@@ -2,7 +2,6 @@ import os
 import logging
 from typing import List, Dict, Any
 
-from sentence_transformers import SentenceTransformer
 import chromadb
 
 from pipeline.config import settings
@@ -17,17 +16,25 @@ class Embedder:
         os.environ["TQDM_DISABLE"] = "1"
         os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
         
-        # 1. Initialize local embedding model
-        model_name = "BAAI/bge-small-en-v1.5"
-        logger.info(f"Loading embedding model: {model_name}")
-        self.model = SentenceTransformer(model_name)
+        self._model = None  # Lazy-loaded to save ~300MB RAM at idle
         
-        # 2. Initialize ChromaDB client via singleton
+        # Initialize ChromaDB client via singleton
         self.chroma_client = vector_store.client
         
-        # 3. Create or get collection dynamically
+        # Create or get collection dynamically
         self.collection = vector_store.get_collection("blinkit_insights")
         logger.info(f"Initialized singleton ChromaDB collection 'blinkit_insights'")
+
+    @property
+    def model(self):
+        """Lazily load the SentenceTransformer model on first use."""
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer
+            model_name = "BAAI/bge-small-en-v1.5"
+            logger.info(f"Lazy-loading embedding model: {model_name}")
+            self._model = SentenceTransformer(model_name)
+            logger.info("Embedding model loaded successfully.")
+        return self._model
 
     def _prepare_metadata(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """Flatten item into Chroma-compatible metadata (strings, ints, floats or bools)."""
