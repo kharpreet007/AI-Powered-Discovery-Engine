@@ -277,10 +277,7 @@ function DonutChart({ data, title, totalLabel }: { data: any[], title: string, t
                 </h3>
                 <p className="text-on-surface-variant text-body-sm">AI-identified clusters with high frequency and impact.</p>
               </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:border-primary-container text-body-sm animate-engine cursor-pointer">Export CSV</button>
-                <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:border-primary-container text-body-sm animate-engine cursor-pointer">Sort: Impact</button>
-              </div>
+
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
               {stats?.emergent_themes ? (
