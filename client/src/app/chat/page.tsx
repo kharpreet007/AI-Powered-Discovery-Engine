@@ -121,7 +121,7 @@ export default function ChatPage() {
   return (
     <>
       <Topbar title="Discovery Chat" />
-      <main className="h-screen pt-20 md:pl-64 flex flex-col relative overflow-hidden">
+      <main className="h-screen pt-20 pb-20 md:pb-0 md:pl-64 flex flex-col relative overflow-hidden">
         <div className="bg-bloom top-[-10%] left-[-10%]"></div>
         <div className="bg-bloom bottom-[-10%] right-[-10%]"></div>
 

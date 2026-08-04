@@ -84,7 +84,7 @@ export default function PipelinePage() {
   return (
     <>
       <Topbar title="Pipeline Flow" />
-      <main className="md:pl-64 pt-24 min-h-screen relative overflow-hidden">
+      <main className="md:pl-64 pt-24 min-h-screen relative overflow-hidden pb-20 md:pb-0">
         <div className="bg-bloom top-[-10%] left-[-10%]"></div>
         <div className="bg-bloom bottom-[-10%] right-[-10%]"></div>
         <div className="max-w-[1400px] mx-auto px-container-padding relative z-10 pb-12">

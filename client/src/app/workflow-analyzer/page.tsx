@@ -72,7 +72,7 @@ export default function WorkflowAnalyzer() {
   return (
     <>
       <Topbar title="Workflow Analyzer" />
-      <main className="min-h-screen pt-24 md:pl-64 pb-20 relative overflow-hidden bg-background">
+      <main className="min-h-screen pt-24 md:pl-64 pb-20 md:pb-0 relative overflow-hidden bg-background">
         <div className="bg-bloom top-[-20%] left-[-10%] opacity-40"></div>
         <div className="bg-bloom bottom-[-10%] right-[-10%] opacity-30"></div>
         

@@ -122,7 +122,7 @@ function DonutChart({ data, title, totalLabel }: { data: any[], title: string, t
   return (
     <>
       <Topbar title="Insights Overview" />
-      <main className="md:pl-64 pt-20 min-h-screen relative">
+      <main className="md:pl-64 pt-20 min-h-screen relative pb-20 md:pb-0">
         <div className="bg-bloom top-[-10%] left-[-10%]"></div>
         <div className="bg-bloom bottom-[-10%] right-[-10%]"></div>
         
