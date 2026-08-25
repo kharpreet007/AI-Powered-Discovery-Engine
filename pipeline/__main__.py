@@ -60,6 +60,7 @@ def run_ingestion(sources_arg: str, limit: int):
             items = connector.fetch(since=since_date, limit=limit)
             logger.info(f"{connector.source_name}: Fetched {len(items)} items.")
             
+            items_to_upsert = []
             for item in items:
                 # Convert dataclass to dict for storage
                 item_dict = {
@@ -72,8 +73,11 @@ def run_ingestion(sources_arg: str, limit: int):
                     "metadata": item.metadata,
                     "ingested_at": datetime.now(timezone.utc).isoformat()
                 }
-                raw_store.upsert(item_dict)
+                items_to_upsert.append(item_dict)
                 total_ingested += 1
+                
+            if items_to_upsert:
+                raw_store.upsert_batch(items_to_upsert)
                 
         except Exception as e:
             logger.exception(f"Failed to ingest from {connector.source_name}: {e}")
@@ -125,6 +129,7 @@ def run_cleaning():
     items = rule_filter.process(items)
     
     # Save cleaned items back to raw_store (metadata flag updates + translation updates)
+    items_to_upsert = []
     for item in items:
         item_dict = {
             "source": item.source,
@@ -136,7 +141,10 @@ def run_cleaning():
             "metadata": item.metadata,
             # preserve original ingested_at if we want, or just let it be
         }
-        raw_store.upsert(item_dict)
+        items_to_upsert.append(item_dict)
+        
+    if items_to_upsert:
+        raw_store.upsert_batch(items_to_upsert)
         
     logger.info("Cleaning pipeline complete. Items updated in store.")
 
@@ -170,6 +178,7 @@ def run_extraction():
     processed_items = extractor.process(items)
     
     saved_count = 0
+    items_to_upsert = []
     for item in processed_items:
         if item.metadata.get("extracted", False):
             item_dict = {
@@ -181,8 +190,11 @@ def run_extraction():
                 "url": item.url,
                 "metadata": item.metadata,
             }
-            tagged_store.upsert(item_dict)
+            items_to_upsert.append(item_dict)
             saved_count += 1
+            
+    if items_to_upsert:
+        tagged_store.upsert_batch(items_to_upsert)
             
     logger.info(f"Extraction pipeline complete. {saved_count} items tagged and saved.")
 

@@ -3,7 +3,7 @@ import logging
 import time
 from typing import List, Dict, Any
 import google.generativeai as genai
-from groq import Groq
+
 
 from pipeline.config import settings
 from pipeline.connectors.base import RawItem
@@ -19,9 +19,8 @@ class Extractor:
         genai.configure(api_key=settings.gemini_api_key)
         self.gemini_model = genai.GenerativeModel("gemini-flash-latest", system_instruction=EXTRACTION_PROMPT)
         
-        # Fallback: Groq
-        self.groq_client = Groq(api_key=settings.groq_api_key)
-        self.groq_model = "llama-3.3-70b-versatile"
+        # Fallback: Gemini Secondary
+        self.gemini_model_fallback = genai.GenerativeModel("gemini-flash-latest", system_instruction=EXTRACTION_PROMPT)
 
     def _call_gemini(self, items: List[Dict]) -> List[Dict]:
         logger.info(f"Calling Gemini (primary) for {len(items)} items")
@@ -31,26 +30,29 @@ class Extractor:
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json",
                 temperature=0.0
-            )
+            ),
+            request_options={"retry": None, "timeout": 20.0}
         )
         data = json.loads(response.text)
         return data.get("results", [])
         
-    def _call_groq(self, items: List[Dict]) -> List[Dict]:
-        logger.info(f"Calling Groq (fallback) for {len(items)} items")
+    def _call_gemini_fallback(self, items: List[Dict]) -> List[Dict]:
+        logger.info(f"Calling Gemini (fallback) for {len(items)} items")
         prompt = json.dumps(items)
-        response = self.groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": EXTRACTION_PROMPT},
-                {"role": "user", "content": prompt}
-            ],
-            model=self.groq_model,
-            temperature=0.0,
-            response_format={"type": "json_object"}
-        )
-        text = response.choices[0].message.content
-        data = json.loads(text)
-        return data.get("results", [])
+        try:
+            genai.configure(api_key=settings.gemini_api_key_secondary)
+            response = self.gemini_model_fallback.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    temperature=0.0
+                ),
+                request_options={"retry": None, "timeout": 20.0}
+            )
+            data = json.loads(response.text)
+            return data.get("results", [])
+        finally:
+            genai.configure(api_key=settings.gemini_api_key)
 
     def process(self, items: List[RawItem]) -> List[RawItem]:
         """Process items and add metadata."""
@@ -82,12 +84,12 @@ class Extractor:
                 # Primary: Gemini
                 results = self._call_gemini(payload)
             except Exception as e:
-                logger.warning(f"Gemini failed: {e}. Falling back to Groq.")
+                logger.warning(f"Gemini failed: {e}. Falling back to secondary Gemini.")
                 try:
-                    # Fallback: Groq
-                    results = self._call_groq(payload)
+                    # Fallback: Gemini Secondary
+                    results = self._call_gemini_fallback(payload)
                 except Exception as e2:
-                    logger.error(f"Groq fallback failed: {e2}")
+                    logger.error(f"Gemini fallback failed: {e2}")
                     # Skip this batch if both fail
                     continue
                     

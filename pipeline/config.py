@@ -169,6 +169,7 @@ REDDIT_INTENT_QUERIES = {
 class Settings(BaseSettings):
     groq_api_key: str = ""
     gemini_api_key: str = ""
+    gemini_api_key_secondary: str = ""
     youtube_api_key: str = ""
     admin_ingest_token: str = ""
     serpapi_key: str = ""

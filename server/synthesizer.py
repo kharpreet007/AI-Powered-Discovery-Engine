@@ -3,7 +3,7 @@ import logging
 from typing import List, Dict, Any, Generator
 
 import google.generativeai as genai
-from groq import Groq
+
 
 from pipeline.config import settings
 from server.retriever import RetrievedItem
@@ -32,8 +32,7 @@ class Synthesizer:
     def __init__(self):
         genai.configure(api_key=settings.gemini_api_key)
         self.model = genai.GenerativeModel("gemini-flash-latest")
-        self.groq_client = Groq(api_key=settings.groq_api_key)
-        self.groq_model = "llama-3.3-70b-versatile"
+        self.model_fallback = genai.GenerativeModel("gemini-flash-latest")
 
     def _format_evidence(self, items: List[RetrievedItem], stats: str) -> str:
         formatted = ["[MACRO STATS]\n" + stats + "\n\n[MICRO QUOTES]"]
@@ -72,32 +71,37 @@ class Synthesizer:
             response = self.model.generate_content(
                 contents,
                 stream=True,
-                generation_config=genai.GenerationConfig(temperature=0.0)
+                generation_config=genai.GenerationConfig(temperature=0.0),
+                request_options={"retry": None, "timeout": 10.0}
             )
             for chunk in response:
                 if chunk.text:
                     yield chunk.text
 
-        def _groq_stream():
-            logger.info("Falling back to Groq...")
-            groq_messages = [{"role": "system", "content": system_prompt}]
-            
-            for msg in messages[:-1]:
-                role = "user" if msg["role"] == "user" else "assistant"
-                groq_messages.append({"role": role, "content": msg["content"]})
+        def _gemini_stream_fallback():
+            logger.info("Falling back to secondary Gemini...")
+            try:
+                genai.configure(api_key=settings.gemini_api_key_secondary)
+                contents = []
+                for msg in messages[:-1]:
+                    role = "user" if msg["role"] == "user" else "model"
+                    contents.append({"role": role, "parts": [msg["content"]]})
+                    
+                last_query = messages[-1]["content"] if messages else ""
+                full_prompt = f"System Instructions & Evidence:\n{system_prompt}\n\nUser Question: {last_query}"
+                contents.append({"role": "user", "parts": [full_prompt]})
                 
-            last_query = messages[-1]["content"] if messages else ""
-            groq_messages.append({"role": "user", "content": last_query})
-            
-            response = self.groq_client.chat.completions.create(
-                model=self.groq_model,
-                messages=groq_messages,
-                temperature=0.0,
-                stream=True
-            )
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                response = self.model_fallback.generate_content(
+                    contents,
+                    stream=True,
+                    generation_config=genai.GenerationConfig(temperature=0.0),
+                    request_options={"retry": None, "timeout": 10.0}
+                )
+                for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+            finally:
+                genai.configure(api_key=settings.gemini_api_key)
 
         # Try Gemini first
         gen = _gemini_stream()
@@ -108,9 +112,9 @@ class Synthesizer:
             for chunk in gen:
                 yield chunk
         except Exception as e:
-            logger.warning(f"Gemini failed ({e}). Falling back to Groq.")
-            groq_gen = _groq_stream()
-            for chunk in groq_gen:
+            logger.warning(f"Gemini failed ({e}). Falling back to secondary Gemini.")
+            fallback_gen = _gemini_stream_fallback()
+            for chunk in fallback_gen:
                 yield chunk
 
     def synthesize(self, messages: List[Dict[str, str]], evidence: List[RetrievedItem], stats: str) -> str:
@@ -143,7 +147,10 @@ Format your output EXACTLY as valid JSON with no markdown formatting, like this:
 """
         try:
             # Try Gemini first
-            response = self.model.generate_content(prompt)
+            response = self.model.generate_content(
+                prompt,
+                request_options={"retry": None, "timeout": 3.0}
+            )
             result_text = response.text.strip()
             # Clean up potential markdown formatting from Gemini
             if result_text.startswith("```json"):
@@ -153,17 +160,23 @@ Format your output EXACTLY as valid JSON with no markdown formatting, like this:
             
             return json.loads(result_text)
         except Exception as e:
-            logger.warning(f"Gemini failed for theme generation ({e}). Falling back to Groq.")
+            logger.warning(f"Gemini failed for theme generation ({e}). Falling back to secondary Gemini.")
             try:
-                groq_res = self.groq_client.chat.completions.create(
-                    model=self.groq_model,
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "json_object"},
-                    temperature=0.0
+                genai.configure(api_key=settings.gemini_api_key_secondary)
+                response = self.model_fallback.generate_content(
+                    prompt,
+                    request_options={"retry": None, "timeout": 3.0}
                 )
-                return json.loads(groq_res.choices[0].message.content)
+                result_text = response.text.strip()
+                if result_text.startswith("```json"):
+                    result_text = result_text[7:-3]
+                elif result_text.startswith("```"):
+                    result_text = result_text[3:-3]
+                return json.loads(result_text)
             except Exception as inner_e:
-                logger.error(f"Groq fallback failed for theme generation: {inner_e}")
+                logger.error(f"Gemini fallback failed for theme generation: {inner_e}")
+            finally:
+                genai.configure(api_key=settings.gemini_api_key)
                 # Ultimate fallback to generic statistical naming
                 return {
                     "title": f"{barrier.title()} in {category}",
@@ -189,28 +202,32 @@ Your report should include:
 1. An Executive Summary (TL;DR).
 2. Key Insights and Trends (based on the stats and themes).
 3. Strategic Recommendations (what we should do next).
-4. A brief note at the end under a section "Report Metadata" mentioning that this report was generated by the Discovery Engine LLM using either Google Gemini (Primary) or Groq Llama 3 (Fallback), and typically consumes ~2,000-4,000 tokens per run.
+4. A brief note at the end under a section "Report Metadata" mentioning that this report was generated by the Discovery Engine LLM, typically consumes ~2,000-4,000 tokens per run.
 
 Make the formatting professional, punchy, and highly analytical. Use bolding, bullet points, and headers.
 """
         try:
             response = self.model.generate_content(
                 prompt,
-                generation_config=genai.GenerationConfig(temperature=0.2)
+                generation_config=genai.GenerationConfig(temperature=0.2),
+                request_options={"retry": None, "timeout": 10.0}
             )
             return response.text.strip()
         except Exception as e:
-            logger.warning(f"Gemini failed for executive summary ({e}). Falling back to Groq.")
+            logger.warning(f"Gemini failed for executive summary ({e}). Falling back to secondary Gemini.")
             try:
-                groq_res = self.groq_client.chat.completions.create(
-                    model=self.groq_model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.2
+                genai.configure(api_key=settings.gemini_api_key_secondary)
+                response = self.model_fallback.generate_content(
+                    prompt,
+                    generation_config=genai.GenerationConfig(temperature=0.2),
+                    request_options={"retry": None, "timeout": 10.0}
                 )
-                return groq_res.choices[0].message.content.strip()
+                return response.text.strip()
             except Exception as inner_e:
-                logger.error(f"Groq fallback failed for executive summary: {inner_e}")
+                logger.error(f"Gemini fallback failed for executive summary: {inner_e}")
                 return "# Error\\nFailed to generate summary due to AI engine errors."
+            finally:
+                genai.configure(api_key=settings.gemini_api_key)
 
 # Global instance
 synthesizer = Synthesizer()
