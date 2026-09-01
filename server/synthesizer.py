@@ -3,6 +3,7 @@ import logging
 from typing import List, Dict, Any, Generator
 
 import google.generativeai as genai
+from groq import Groq
 
 
 from pipeline.config import settings
@@ -33,6 +34,10 @@ class Synthesizer:
         genai.configure(api_key=settings.gemini_api_key)
         self.model = genai.GenerativeModel("gemini-flash-latest")
         self.model_fallback = genai.GenerativeModel("gemini-flash-latest")
+        if settings.groq_api_key:
+            self.groq_client = Groq(api_key=settings.groq_api_key)
+        else:
+            self.groq_client = None
 
     def _format_evidence(self, items: List[RetrievedItem], stats: str) -> str:
         formatted = ["[MACRO STATS]\n" + stats + "\n\n[MICRO QUOTES]"]
@@ -57,31 +62,30 @@ class Synthesizer:
         evidence_text = self._format_evidence(evidence, stats)
         system_prompt = SYNTHESIS_PROMPT.replace("{retrieved_chunks_with_metadata}", evidence_text)
         
-        # We will wrap the gemini stream. If it throws immediately, we fallback.
-        def _gemini_stream():
-            contents = []
-            for msg in messages[:-1]:
-                role = "user" if msg["role"] == "user" else "model"
-                contents.append({"role": role, "parts": [msg["content"]]})
-                
-            last_query = messages[-1]["content"] if messages else ""
-            full_prompt = f"System Instructions & Evidence:\n{system_prompt}\n\nUser Question: {last_query}"
-            contents.append({"role": "user", "parts": [full_prompt]})
+        def _groq_stream():
+            logger.info("Calling Groq (primary) for chat engine...")
+            if not self.groq_client:
+                raise ValueError("Groq client not initialized")
             
-            response = self.model.generate_content(
-                contents,
+            groq_messages = [{"role": "system", "content": system_prompt}]
+            for msg in messages:
+                role = "user" if msg["role"] == "user" else "assistant"
+                groq_messages.append({"role": role, "content": msg["content"]})
+                
+            response = self.groq_client.chat.completions.create(
+                model="groq/compound",
+                messages=groq_messages,
                 stream=True,
-                generation_config=genai.GenerationConfig(temperature=0.0),
-                request_options={"retry": None, "timeout": 10.0}
+                temperature=0.0
             )
             for chunk in response:
-                if chunk.text:
-                    yield chunk.text
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
 
         def _gemini_stream_fallback():
-            logger.info("Falling back to secondary Gemini...")
+            logger.info("Falling back to Gemini...")
             try:
-                genai.configure(api_key=settings.gemini_api_key_secondary)
+                genai.configure(api_key=settings.gemini_api_key)
                 contents = []
                 for msg in messages[:-1]:
                     role = "user" if msg["role"] == "user" else "model"
@@ -91,28 +95,32 @@ class Synthesizer:
                 full_prompt = f"System Instructions & Evidence:\n{system_prompt}\n\nUser Question: {last_query}"
                 contents.append({"role": "user", "parts": [full_prompt]})
                 
-                response = self.model_fallback.generate_content(
+                response = self.model.generate_content(
                     contents,
                     stream=True,
                     generation_config=genai.GenerationConfig(temperature=0.0),
-                    request_options={"retry": None, "timeout": 10.0}
+                    request_options={"retry": None, "timeout": 60.0}
                 )
                 for chunk in response:
                     if chunk.text:
                         yield chunk.text
             finally:
-                genai.configure(api_key=settings.gemini_api_key)
+                pass
 
-        # Try Gemini first
-        gen = _gemini_stream()
-        try:
-            # Manually get the first chunk to catch rate limit errors immediately
-            first_chunk = next(gen)
-            yield first_chunk
-            for chunk in gen:
-                yield chunk
-        except Exception as e:
-            logger.warning(f"Gemini failed ({e}). Falling back to secondary Gemini.")
+        # Try Groq first
+        if self.groq_client:
+            gen = _groq_stream()
+            try:
+                first_chunk = next(gen)
+                yield first_chunk
+                for chunk in gen:
+                    yield chunk
+            except Exception as e:
+                logger.warning(f"Groq failed ({e}). Falling back to Gemini.")
+                fallback_gen = _gemini_stream_fallback()
+                for chunk in fallback_gen:
+                    yield chunk
+        else:
             fallback_gen = _gemini_stream_fallback()
             for chunk in fallback_gen:
                 yield chunk
@@ -210,7 +218,7 @@ Make the formatting professional, punchy, and highly analytical. Use bolding, bu
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.GenerationConfig(temperature=0.2),
-                request_options={"retry": None, "timeout": 10.0}
+                request_options={"retry": None, "timeout": 60.0}
             )
             return response.text.strip()
         except Exception as e:
@@ -220,7 +228,7 @@ Make the formatting professional, punchy, and highly analytical. Use bolding, bu
                 response = self.model_fallback.generate_content(
                     prompt,
                     generation_config=genai.GenerationConfig(temperature=0.2),
-                    request_options={"retry": None, "timeout": 10.0}
+                    request_options={"retry": None, "timeout": 60.0}
                 )
                 return response.text.strip()
             except Exception as inner_e:

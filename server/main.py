@@ -77,7 +77,7 @@ async def get_stats():
         mtime = os.path.getmtime(chroma_dir)
         last_updated_str = datetime.fromtimestamp(mtime).strftime("%b %d, %I:%M %p")
         
-    return StatsResponse(
+    logger.info(f"Returning stats: {len(relevant_items)} items"); return StatsResponse(
         total_items=len(relevant_items),
         source_counts=dict(source_counts),
         volume_funnel=funnel_data,
