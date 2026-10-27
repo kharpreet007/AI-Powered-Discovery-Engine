@@ -5,6 +5,8 @@ WORKDIR /app
 # Install dependencies
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
+# CPU-only torch keeps the image far smaller than the default CUDA build
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install app-store-scraper separately (it hard-pins requests==2.23.0 which conflicts)

@@ -9,7 +9,7 @@ export default function PipelinePage() {
   const [status, setStatus] = useState<any>(null);
   const [dbStats, setDbStats] = useState<any>(null);
   
-  const [adminToken, setAdminToken] = useState("dev_token_123");
+  const [adminToken, setAdminToken] = useState("");
 
   const fetchStats = async () => {
     try {

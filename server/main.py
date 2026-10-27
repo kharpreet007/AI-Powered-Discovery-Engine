@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 import os
+import secrets
 
 from server.models import ChatRequest, StatsResponse, SummaryRequest, SummaryResponse, IngestRequest, IngestStatusResponse
 from server.retriever import retriever
@@ -33,8 +34,8 @@ app.add_middleware(
 security = HTTPBearer()
 
 def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    admin_token = os.environ.get("ADMIN_TOKEN", "dev_token_123")
-    if credentials.credentials != admin_token:
+    admin_token = settings.admin_ingest_token
+    if not admin_token or not secrets.compare_digest(credentials.credentials, admin_token):
         raise HTTPException(status_code=401, detail="Invalid admin token")
     return credentials.credentials
 
