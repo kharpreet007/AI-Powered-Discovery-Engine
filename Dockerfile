@@ -12,15 +12,24 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install app-store-scraper separately (it hard-pins requests==2.23.0 which conflicts)
 RUN pip install --no-cache-dir --no-deps app-store-scraper==0.3.5
 
+# Run as a non-root user (uid 1000): required by Hugging Face Spaces, harmless elsewhere
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user
+WORKDIR /home/user/app
+
 # Pre-download embedding model to prevent startup timeouts
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
-# Copy source code and data stores
-COPY pipeline/ pipeline/
-COPY server/ server/
-COPY data/ data/
+# Copy source code and data stores (writable by the app user: Chroma writes to its sqlite file)
+COPY --chown=user pipeline/ pipeline/
+COPY --chown=user server/ server/
+COPY --chown=user data/ data/
 
 # Set env to production
 ENV PYTHONUNBUFFERED=1
 
 # Run FastAPI server
-CMD uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Hugging Face Spaces serves port 7860; Railway/others inject PORT
+ENV PORT=7860
+EXPOSE 7860
+CMD uvicorn server.main:app --host 0.0.0.0 --port ${PORT}

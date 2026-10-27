@@ -1,3 +1,13 @@
+---
+title: Blinkit Discovery Engine
+emoji: 🔎
+colorFrom: yellow
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Blinkit Discovery Engine
 
 An AI-powered discovery engine that transforms unstructured user feedback from multiple public sources into a queryable knowledge base for Blinkit user behavior insights.

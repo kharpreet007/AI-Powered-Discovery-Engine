@@ -30,3 +30,8 @@ venv312/
 chroma_db/
 client/node_modules/
 client/.next/
+
+# Local environments
+venv/
+node_modules/
+.next/
